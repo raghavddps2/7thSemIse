@@ -8,6 +8,7 @@ int primes[1000];
 double sines[1000];
 
 void generatePrimes(int n){
+    printf("Thread id: %d",omp_get_thread_num());
     int count = 0;
     int i = 2;
 
@@ -34,6 +35,7 @@ void generatePrimes(int n){
 */
 
 void generateSines(int n){
+    printf("Thread id: %d",omp_get_thread_num());
     for(int i=0;i<n;i++){
         //180 degrees = PI radians.
         //i degree = (PI/180)*i
