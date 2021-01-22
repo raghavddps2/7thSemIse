@@ -41,7 +41,7 @@ int main(){
                 red = gdImageRed(img,color);
                 green = gdImageGreen(img,color);
                 blue = gdImageBlue(img,color);
-
+                
                 //TODO - How the formula came.
                 combined = 0.3*red + 0.59*green + 0.11*blue;
                 color = gdImageColorAllocate(img,combined,combined,combined); 
