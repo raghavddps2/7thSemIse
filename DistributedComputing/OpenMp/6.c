@@ -1,5 +1,5 @@
 #include<stdio.h>
-#include<gd.h> //This is the graphics-draw header file.
+#include<gd.h> //This is the graphics-draw header file. -lgd used for compilation
 #include<string.h>
 #include<omp.h>
 
@@ -51,6 +51,7 @@ int main(){
     }
 
     double t2 = omp_get_wtime();
+    
     fp = fopen(output_file,"w");
     if(fp == NULL){
         printf("\nError opening output file %s", output_file);
