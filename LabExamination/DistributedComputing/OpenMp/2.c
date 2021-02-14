@@ -9,7 +9,7 @@
 
 void main(){
     int numRows, numCols, vectorSize;
-    omp_set_num_threads(32);
+    omp_set_num_threads(4);
     printf("\n Enter the number of rows:\t");
     scanf("%d",&numRows);
 
@@ -60,6 +60,7 @@ void main(){
 
     #pragma omp parallel for private(j)
     for(i=0;i<numRows;i++){
+        printf("%d ",omp_get_thread_num());
         for(j=0;j<numCols;j++){
             result[i] = result[i] +  vector[j]*matrix[i][j];
         }   

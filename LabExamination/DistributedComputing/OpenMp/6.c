@@ -31,7 +31,6 @@ void main(){
                 red = gdImageRed(image,color);
                 green = gdImageGreen(image,color);
                 blue = gdImageBlue(image,color);
-
                 combined = 0.33*red + 0.33*green + 0.34*blue;
                 color = gdImageColorAllocate(image,combined,combined,combined); //allocate color
                 gdImageSetPixel(image,i,j,color); //set pixel

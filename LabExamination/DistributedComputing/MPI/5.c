@@ -2,6 +2,7 @@
  * 
  * Write  MPI  program  to  compute  Matrix-Matrix  Multiplication  using
  * self-scheduling algorithm.
+ * 
  * */
 
 #include<stdio.h>
@@ -20,7 +21,8 @@ void main(int argc,char** argv){
     MPI_Comm_size(MPI_COMM_WORLD,&size);
     MPI_Status status;
 
-    if(rank == 0){
+    if(rank == 0)
+    {
         for(int i=0;i<2;i++){
             for(int j=0;j<2;j++){
                 c[i][j] = 0;
@@ -31,6 +33,7 @@ void main(int argc,char** argv){
         }
         MPI_Send(&c,bufferSize,MPI_INT,1,0,MPI_COMM_WORLD);
     }
+
     else if(rank == 1){
         MPI_recv(&c,bufferSize,MPI_INT,0,0,MPI_COMM_WORLD,&status);
         for(int i=0;i<2;i++){
@@ -40,5 +43,6 @@ void main(int argc,char** argv){
             printf("\n");
         }
     }
+
     MPI_Finalize();
 }
