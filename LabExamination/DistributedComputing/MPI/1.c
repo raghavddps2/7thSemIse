@@ -1,35 +1,35 @@
+/**
+ * Program for communication among two processes.
+ * 
+ * */
 #include<stdio.h>
-#include<string.h>
 #include<mpi.h>
+#include<string.h>
 #define BUFFER_SIZE 32
-
-int main(int argc, char* argv[]){
-
-    int rank,numProcs;
-    int root = 3;
-
-    int tag = 0; //whatever the message tag is (basically an identifier for message)
-    char message[BUFFER_SIZE]; //defining the message
+void main(int argc, char *argv[]){
     
-    //general initializations
-    MPI_Init(&argc,&argv); 
-    MPI_Status status;
+    char message[BUFFER_SIZE];
+    int rank,size;
+    MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD,&size);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-    MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
 
-    //Whenever we have rank 3, we just send and others we receive.
-    if(rank == 3){
-        strcpy(message,"Hello");
-        for(int temp = 0;temp<numProcs;temp++){
-            if(temp != 3){
-                MPI_Send(message,BUFFER_SIZE,MPI_CHAR,temp,tag,MPI_COMM_WORLD);
-            }   
+    //Sending message from the master process to all the other processes.
+    if(rank == 0){
+        strcpy(message,"Raghav is a boy");
+
+        for(int i=0;i<size;i++){
+            if(i != 0){
+                MPI_Send(message,32,MPI_CHAR,i,0,MPI_COMM_WORLD);
+            }
         }
     }
-    //receving noww!!
     else{
-        MPI_Recv(message,BUFFER_SIZE,MPI_CHAR,root,tag,MPI_COMM_WORLD,&status);
-        printf("%s received to a process with rank %d from a process with rank %d",message,rank,root);
+        //Receving it in all the other processes.
+        char message2[BUFFER_SIZE];
+        MPI_Status status;
+        MPI_Recv(message2,BUFFER_SIZE,MPI_CHAR,0,0,MPI_COMM_WORLD,&status);
+        printf("\n Message received from process 0 in process %d: %s\n",rank,message2);
     }
-
 }
+

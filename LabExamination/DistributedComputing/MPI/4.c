@@ -1,111 +1,85 @@
-//C program which creates new communicators involving a subset of initial set of MPI processes in the default communicator MPI_COMM_WORLD
 /**
- * 
- * 1. We have used the communicator as MPI_COMM_WORLD, and for simple applications this is sufficient,
- * 	  as we have a relatively small number of processes and we usually talk to one of them at a time
- * 	  or all of them at a time.
- * 
- * 2. When applications get bigger, this becomes impractical and we only want to talk to a few processes
- * 	  at once. So, we create new communicators to communicate with a subset of the original group of
- * 	  processes at once.
- * 
- * 3. MPI_Scatter - Distribute data from one process to another.
- * 	  MPI_Reduce - Data reduction on the processes
- * 
- * 4. MPI_Comm_split is one of the most common communicator creator function. And there are many others,
- * 	  MPI_Comm_dup is the most basic and creates a duplicated of a communicator.
- * 
- * 5. 	
+ * Write A C program which creates new communicators involving a subset of initial set of MPI 
+ * processes in the default communicator MPI_COMM_WORLD
  * */
 
 #include<stdio.h>
 #include<mpi.h>
+#include<stdlib.h>
 
-void main(int argc, char* argv[]){
+void main(int argc,char *argv[]){
+    int rank,size;
+    MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD,&size);
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	int size,rank;
-	MPI_Group groupId, evenGroupId, oddGroupId;
-	MPI_Comm EVEN_Comm, ODD_Comm;
+    MPI_Comm odd_comm_id, even_comm_id;
+    MPI_Group world_group_id,odd_group_id,even_group_id;
 
-	MPI_Init(&argc,&argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	
-	MPI_Comm_group(MPI_COMM_WORLD,&groupId);
+    if(rank == 0){
+        printf("\nCommunicator MPI: Master process");
+        printf("\nThe number of processes are %d ",size);
+    }
 
-	// processors - 5, odd Processor - 1,3
-	// processors - 5, even processors - 0,2,4
-	int evenPSize = (size+1)/2;
-	int oddPSize = (size)/2;
+    MPI_Comm_group(MPI_COMM_WORLD,&world_group_id);
 
-	int evenRanks[evenPSize];
-	int oddRanks[oddPSize];
+    int even_p,odd_p;
+    int even_id,odd_id;
+    int even_id_sum, odd_id_sum;
+    
+    even_p = (size+1)/2;
+    odd_p = (size)/2;
 
-	//Assigning ranks
-	int j = 0;
-	for(int i=0;i<size;i+=2){
-		evenRanks[j] = i;
-		j = j + 1;
-	}
+    int even_ranks[even_p];
+    int odd_ranks[odd_p];
 
-	//creating the group
-	MPI_Group_incl(groupId,evenPSize,evenRanks,&evenGroupId);
-	//creating the communicator
-	MPI_Comm_create(MPI_COMM_WORLD,evenGroupId,&EVEN_Comm);
+    int j = 0;
+    int k = 0;
+    for(j=0;j<size;j+=2){
+        even_ranks[k] = j;
+        k = k + 1;
+    }
 
+    j = 0;
+    k = 0;
+    for(j=1;j<size;j+=2){
+        odd_ranks[k] = j;
+        k = k + 1;
+    }
 
-	j = 0;
-	for(int i=1;i<size;i+=2){
-		oddRanks[j] = i;
-		j += 1;
-	}
+    //create group and communicator.
+    MPI_Group_incl(world_group_id,even_p,even_ranks,&even_group_id);
+    MPI_Comm_create(MPI_COMM_WORLD,even_group_id,&even_comm_id);
 
-	/**
-	 * Now, we need to create 2 things.
-	 * 
-	 * 1. We need to create a group that includes only even ranks
-	 * 2. We need to create a communicator for that group.
-	 * */
+    MPI_Group_incl(world_group_id,odd_p,odd_ranks,&odd_group_id);
+    MPI_Comm_create(MPI_COMM_WORLD,odd_group_id,&odd_comm_id);
 
-	MPI_Group_incl(groupId,oddPSize,oddRanks,&oddGroupId);
-	MPI_Comm_create(MPI_COMM_WORLD,oddGroupId,&ODD_Comm);
+    //odd rank
+    if(rank%2 != 0){
+        MPI_Comm_rank(odd_comm_id,&odd_id);
+        even_id = -1;
+    }
 
+    if(rank%2 == 0){
+        MPI_Comm_rank(even_comm_id,&even_id);
+        odd_id = -1;
+    }
 
-	int oddRank, evenRank;
-	int evenSum, oddSum;
-	int isOdd, isEven;
+    if(odd_id != -1){
+        MPI_Reduce(&rank,&odd_id_sum,1,MPI_INT,MPI_SUM,0,odd_comm_id);
+    }
 
-	//Simply we need to initialize ranks, 
-	//meaning odd
-	if(rank%2 != 0){
-		MPI_Comm_rank(ODD_Comm,&oddRank);
-		isEven = -1;
-	}
+    if(even_id != -1){
+        MPI_Reduce(&rank,&even_id_sum,1,MPI_INT,MPI_SUM,0,even_comm_id);
+    }
 
-	if(rank%2 == 0){
-		MPI_Comm_rank(EVEN_Comm,&evenRank);
-		isOdd = -1;
-	}
-
-	//reduce even
-	if(isOdd != -1){
-		MPI_Reduce(&rank,&oddSum,1,MPI_INT,MPI_SUM,0,ODD_Comm);
-	}
-	
-	if(oddRank == 0){
-		printf("\n\n Sum of processes in odd communicator: %d \t",oddSum);
-		printf("\n\n Number of processes in odd communicator: %d\t",oddPSize);
-	}
-
-	//reduce odd
-	if(isEven != -1){
-		MPI_Reduce(&rank,&evenSum,1,MPI_INT,MPI_SUM,0,EVEN_Comm);
-	}
-
-	if(evenRank == 0){
-		printf("\n\n Sum of processes in even communicator: %d\t ",evenSum);
-		printf("\n\n Number of processes in Even Communicator: %d\t",evenPSize);
-	}
-	printf("\n");
-	MPI_Finalize();
+    if(even_id == 0){
+        printf("\nNumber of processes in the even communicator: %d\n",even_p);
+        printf("\nSum of global id's in even communicator:%d\n",even_id_sum);
+    }
+    if(odd_id == 0){
+        printf("\nNumber of processes in the odd communicator: %d\n",odd_p);
+        printf("\nSum of global id's in odd communicator:%d\n",odd_id_sum);
+    }
+    MPI_Finalize();
 }

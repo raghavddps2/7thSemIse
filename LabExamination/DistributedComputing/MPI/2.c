@@ -1,52 +1,53 @@
 /**
- * Write  MPI  program  to  compute  dot  product  of  two  vectors using 
- * block-striped partitioning with uniform data distribution
+ * Write an MPI program to compute the dot product of two vectors using block striped partitioning 
+ * with uniform data distribution.
+ * 
+ * Steps
+ * 
+ * 1. MPI_Bcast the vectorSize.
+ * 2. Scatter the two vectors over processes.
+ * 3. Calculate the sum of the blocks
+ * 4. Combine all using MPI_Reduce.
  * */
 
 #include<stdio.h>
 #include<mpi.h>
-#include<stdlib.h>
 #define vectorSize 6
-int main(int argc, char** argv){
+void main(int argc, char *argv[]){
 
-    int A[vectorSize] = {3,5,1,2,1,3};
-    int B[vectorSize] = {2,2,2,2,2,2};
-    int rank,numProcs;
+    int size,rank;
+    
     MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD,&size);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-    MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
 
-    if(vectorSize%numProcs != 0){
-        printf("No even distribution!");
-        exit(0);
-    }
-
-    int scatterSize = vectorSize/numProcs;
-    int buffA[scatterSize], buffB[scatterSize];
-    int result;
-    int buffC = 0; //IMP - Need to initialize with 0
+    int A[vectorSize] = {1,2,3,4,5,6};
+    int B[vectorSize] = {1,2,3,4,5,6};
     int vecSize = vectorSize;
-
-    //Broadcasting to various processes
     MPI_Bcast(&vecSize,1,MPI_INT,0,MPI_COMM_WORLD);
+    //we calculate the scatter size as vectorSize/size
+    int scatterSize = vectorSize/size;  
 
-    //Scattering into various processes - The computations!!
+    int buffA[scatterSize];
+    int buffB[scatterSize];
+
+    //We now need to scatter the input
     MPI_Scatter(A,scatterSize,MPI_INT,buffA,scatterSize,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Scatter(B,scatterSize,MPI_INT,buffB,scatterSize,MPI_INT,0,MPI_COMM_WORLD);
 
-    //This will compute the Dot product
+    int mySum = 0;
+    int totalSum = 0;
+    //Now, all we need to do is to combine.
     for(int i=0;i<scatterSize;i++){
-        buffC += buffA[i]*buffB[i];
-        printf("%d %d %d\n",buffA[i],buffB[i],buffC);
+        mySum += buffA[i]*buffB[i];
     }
-    printf("%d\n",buffC);
 
-    //Reducing the output of buffC to a single value result.
-    MPI_Reduce(&buffC,&result,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD);
+    //Now, we can reduce.
+    //reduced at the root.
+    MPI_Reduce(&mySum,&totalSum,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
 
-
-    //Finally print
     if(rank == 0){
-        printf("The dot product of two vectors is %d and is calculated by %d processes", result,numProcs);
+        printf("The result of the multiplication of 2 vectors is %d\n",totalSum);
     }
+    MPI_Finalize();
 }

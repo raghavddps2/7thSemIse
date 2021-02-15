@@ -1,19 +1,21 @@
 /**
- * C program which searches integers between A and B for a value J
- * such that F(J) = C, using the MPI parallel programming environment
+ * C program which searches integers between A and B for a value J such that F(J) = C, using the
+ * MPI parallel programming environment.
  * */
 
 #include<stdio.h>
 #include<mpi.h>
-#include<stdlib.h>
+#include<math.h>
+
 
 int F(int i){
     return i*i;
 }
 
-int search(int a,int b, int c, int rank, int size){
+int search(int a,int b,int c,int rank,int size){
     int j = -1;
-    // i = 1+ rank and i<=b and i+= size
+
+    //a+rank, so that all processes does not check on all values.
     for(int i=a+rank;i<=b;i+=size){
         int fi = F(i);
         if(fi == c){
@@ -24,29 +26,27 @@ int search(int a,int b, int c, int rank, int size){
     return j;
 }
 
-int main(int argc,char** argv){
-    int rank,size;
-    MPI_Init(&argc,&argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&size);
-    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+void main(int argc,char *argv[]){
 
-    //we need to find a value of J, such that F(J) = C , between a and b
-    //Just initializing stuff
+    int size,rank;
+    MPI_Init(&argc,&argv);
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    MPI_Comm_size(MPI_COMM_WORLD,&size);
+
     int a = 1;
-    int b = 10000000;
-    int c = 81;
-    int j;
+    int b = 100000;
+    int c = 900;
+
     if(rank == 0){
-        printf("\nA=%d",a);
-        printf("\nB=%d",b);
-        printf("\nC=%d",c);
+        printf("A = %d, B = %d, C = %d", a, b, c);
     }
-    //searching
+    int j;
+    double t1 = MPI_Wtime();
     j = search(a,b,c,rank,size);
-    //printing result
+    double t2 = MPI_Wtime();
+
     if(j != -1){
-        printf("Process %d found",rank);
-        printf("\nJ=%d\n",j);
+        printf("\nProcess %d found the value of J as %d in time %f\n",rank,j,t2-t1);
     }
     MPI_Finalize();
 }
