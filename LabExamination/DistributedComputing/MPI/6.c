@@ -38,7 +38,7 @@ void main(int argc,char *argv[]){
     int c = 900;
 
     if(rank == 0){
-        printf("A = %d, B = %d, C = %d", a, b, c);
+        printf("A = %d, B = %d, C = %d\n", a, b, c);
     }
     int j;
     double t1 = MPI_Wtime();

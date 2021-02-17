@@ -7,7 +7,7 @@
 #include<mpi.h>
 #include<stdlib.h>
 
-void main(int argc,char *argv[]){
+void main(int argc,char *argv[]) {
     int rank,size;
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD,&size);
